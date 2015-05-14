@@ -1,0 +1,64 @@
+{
+	"variables": {
+		"PACKER_BOX_NAME": "debian-8.0.0-amd64"
+	},
+	"builders": [{
+		"type": "virtualbox-iso",
+		"boot_command": [
+			"<esc><wait>",
+			"install <wait>",
+			"preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/{{ user `PACKER_BOX_NAME` }}/preseed.cfg <wait>",
+			"debian-installer=en_US <wait>",
+			"auto <wait>",
+			"locale=en_US <wait>",
+			"kbd-chooser/method=us <wait>",
+			"keyboard-configuration/xkb-keymap=us <wait>",
+			"netcfg/get_hostname={{ .Name }} <wait>",
+			"netcfg/get_domain=vagrantup.com <wait>",
+			"fb=false <wait>",
+			"debconf/frontend=noninteractive <wait>",
+			"console-setup/ask_detect=false <wait>",
+			"console-keymaps-at/keymap=us <wait>",
+			"<enter><wait>"
+		],
+		"boot_wait": "10s",
+		"headless": false,
+		"disk_size": 10140,
+		"guest_os_type": "Debian_64",
+		"http_directory": "http",
+		"iso_checksum": "95b46c1c8cb3a02f7b65b5de5dd57d335424684e4b605c2786b168b4851bc17b0b6bf4a53ba22a701532d01883ff4de393ad896ed5595e6c8fd1652d0e3e5690",
+		"iso_checksum_type": "sha512",
+		"iso_url": "http://cdimage.debian.org/cdimage/release/8.0.0/amd64/iso-cd/{{ user `PACKER_BOX_NAME` }}-netinst.iso",
+		"ssh_username": "vagrant",
+		"ssh_password": "vagrant",
+		"ssh_port": 22,
+		"ssh_wait_timeout": "10000s",
+		"shutdown_command": "echo 'vagrant'|sudo -S /sbin/shutdown -hP now",
+		"guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+		"virtualbox_version_file": ".vbox_version",
+		"vm_name": "{{ user `PACKER_BOX_NAME` }}",
+		"vboxmanage": [
+			[ "modifyvm", "{{.Name}}", "--memory", "512" ],
+			[ "modifyvm", "{{.Name}}", "--cpus", "1" ]
+		]
+	}],
+	"provisioners": [
+		{
+			"type": "shell",
+			"execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+			"scripts": [
+				"scripts/vagrant.sh",
+				"scripts/vboxguest.sh"
+			]
+		}
+	],
+	"post-processors": [
+		[
+			{
+				"type": "vagrant",
+				"compression_level": 9,
+				"output": "../builds/{{.Provider}}/{{ user `PACKER_BOX_NAME` }}_{{.Provider}}.box"
+			}
+		]
+	]
+}
